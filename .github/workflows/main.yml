@@ -1,0 +1,45 @@
+
+name: Extract ZIP and publish game
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Get repository files
+        uses: actions/checkout@v4
+
+      - name: Prepare website
+        run: |
+          mkdir -p _site
+          for zip in *.zip; do
+            if [ -f "$zip" ]; then
+              unzip -o "$zip" -d _site
+            fi
+          done
+          test -f _site/index.html
+
+      - name: Configure Pages
+        uses: actions/configure-pages@v5
+
+      - name: Upload website
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: _site
+
+      - name: Publish website
+        uses: actions/deploy-pages@v4
